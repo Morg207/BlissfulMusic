@@ -30,11 +30,15 @@ Here’s what this music player can do:
 🔊 **Volume Control**  
 - Drag the slider to adjust volume in real-time
 
-🔁 **Looping Functionality**  
+🔁 **Looping Functionality**
+
 - Loop your favorite track with a single toggle
 
 🖌️ **Themed UI**  
 - Powered by **`ttkthemes`**, the app offers a modern and consistent look across platforms
+   
+   **Supports multiple filetypes**
+- Supports Wav, Ogg, nd Mp3 files.  
 
 ---
 
