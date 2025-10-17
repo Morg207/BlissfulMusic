@@ -34,7 +34,7 @@ Here’s what this music player can do:
 
 - Loop your favorite track with a single toggle
 
-   **Supports multiple filetypes**
+  **Supports multiple filetypes**
 - Supports Wav, Ogg, and Mp3 files.
 
 🖌️ **Themed UI**  
