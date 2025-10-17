@@ -12,6 +12,7 @@ Here’s what this music player can do:
 - Add multiple tracks to a playlist  
 - See all your loaded songs in one place  
 - Select and play any track from the list
+- Track counter to tell you how many tracks you've loaded
 
 ▶️ **Playback Controls**  
 - **Play** your selected track  
