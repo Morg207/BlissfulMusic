@@ -34,11 +34,11 @@ Here’s what this music player can do:
 
 - Loop your favorite track with a single toggle
 
+**Supports multiple filetypes**
+- Supports Wav, Ogg, nd Mp3 files.
+
 🖌️ **Themed UI**  
-- Powered by **`ttkthemes`**, the app offers a modern and consistent look across platforms
-   
-   **Supports multiple filetypes**
-- Supports Wav, Ogg, nd Mp3 files.  
+- Powered by **`ttkthemes`**, the app offers a modern and consistent look across platforms  
 
 ---
 
