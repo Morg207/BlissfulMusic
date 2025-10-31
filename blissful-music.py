@@ -26,6 +26,7 @@ class MusicPlayer:
         self.muted = False
         self.filenames = []
         self.pathnames = []
+        self.volume = 1.0
 
     def create_frames(self):
         self.window_frame = tk.Frame(self.window, background="white")
@@ -66,7 +67,7 @@ class MusicPlayer:
 
     def create_volume_slider(self):
         frame = ttk.Frame(self.left_frame)
-        volume_slider = ttk.Scale(frame,from_=0, to=10,orient=tk.HORIZONTAL,length=120, command=MusicPlayer.change_volume, value=10)
+        volume_slider = ttk.Scale(frame,from_=0, to=10,orient=tk.HORIZONTAL,length=120, command=self.change_volume, value=10)
         volume_slider.pack(side="left",padx=(0,10))
         self.loop_var = tk.IntVar(value=1)
         loop_checkbox = ttk.Checkbutton(frame,text="Loop",variable=self.loop_var)
@@ -101,9 +102,9 @@ class MusicPlayer:
         style.configure("TButton",font=("Arial",7))
         style.configure("TCheckbutton",font=("Arial",11), indicatorsize=16)
 
-    @staticmethod
-    def change_volume(current_volume):
-        pygame.mixer.music.set_volume(float(current_volume) / 10.0)
+    def change_volume(self,current_volume):
+        self.volume = float(current_volume) / 10.0
+        pygame.mixer.music.set_volume(self.volume)
 
     def load_tracks(self):
         filetypes = [("Mp3", "*.mp3"),("Wav","*.wav"),("Ogg","*.ogg")]
@@ -157,7 +158,7 @@ class MusicPlayer:
             if self.muted:
                 pygame.mixer.music.set_volume(0.0)
             else:
-                pygame.mixer.music.set_volume(1.0)
+                pygame.mixer.music.set_volume(self.volume)
         except pygame.error:
             pass
 
