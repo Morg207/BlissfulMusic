@@ -87,7 +87,7 @@ class MusicPlayer:
         unpause_button = ttk.Button(options_frame, text="Unpause", command=MusicPlayer.unpause, width=8)
         mute_button = ttk.Button(options_frame, text="Mute", command=self.mute, width=4)
         self.play_button.pack(side="left", padx=(0, 1))
-        stop_button.pack(side="left", padx=(0, 1))
+        stop_button.pack(side="left", padx=(0, 1)) 
         pause_button.pack(side="left", padx=(0, 1))
         unpause_button.pack(side="left", padx=(0, 1))
         mute_button.pack(side="left")
@@ -107,7 +107,7 @@ class MusicPlayer:
         pygame.mixer.music.set_volume(self.volume)
 
     def load_tracks(self):
-        filetypes = [("Mp3", "*.mp3"),("Wav","*.wav"),("Ogg","*.ogg")]
+        filetypes = [("Mp3", "*.mp3"),("Wav","*.wav"),("Ogg","*.ogg"), ("Flac","*.flac")]
         pathnames = filedialog.askopenfilenames(filetypes=filetypes)
         if pathnames:
             self.filenames.clear()
