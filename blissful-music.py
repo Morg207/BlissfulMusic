@@ -3,6 +3,7 @@ import tkinter as tk
 from tkinter import filedialog
 from tkinter import ttk
 from ttkthemes import ThemedTk
+import random
 import os
 
 pygame.mixer.init()
@@ -71,8 +72,10 @@ class MusicPlayer:
         volume_slider.pack(side="left",padx=(0,10))
         self.loop_var = tk.IntVar(value=1)
         loop_checkbox = ttk.Checkbutton(frame,text="Loop",variable=self.loop_var)
-        loop_checkbox.pack(side="right")
-        frame.pack(pady=(0,20))
+        loop_checkbox.pack(side="left", padx=(0,8))
+        shuffle_button = ttk.Button(frame, text="Shuffle", command=self.shuffle, width=7)
+        shuffle_button.pack(side="left")
+        frame.pack(pady=(0,20))  
 
     def create_buttons(self, track_info_frame, options_frame):
         track_button = ttk.Button(track_info_frame,text="Load tracks",command=self.load_tracks)
@@ -106,20 +109,32 @@ class MusicPlayer:
         self.volume = float(current_volume) / 10.0
         pygame.mixer.music.set_volume(self.volume)
 
+    def shuffle(self):
+        if self.pathnames:
+            random.shuffle(self.pathnames)
+            self.filenames.clear()
+            for pathname in self.pathnames:
+                filename = os.path.basename(pathname)
+                self.filenames.append(filename)
+            self.populate_track_list()
+
     def load_tracks(self):
         filetypes = [("Mp3", "*.mp3"),("Wav","*.wav"),("Ogg","*.ogg"), ("Flac","*.flac")]
-        pathnames = filedialog.askopenfilenames(filetypes=filetypes)
+        pathnames = list(filedialog.askopenfilenames(filetypes=filetypes))
         if pathnames:
             self.filenames.clear()
             for pathname in pathnames:
                 filename = os.path.basename(pathname)
                 self.filenames.append(filename)
             self.pathnames = pathnames
-            self.track_list.delete(0, tk.END)
-            self.track_list.insert(tk.END,*self.filenames)
-            self.select_first_track()
-            pygame.mixer.music.unload()
-            pygame.mixer.music.load(self.pathnames[0])
+            self.populate_track_list()
+
+    def populate_track_list(self):
+        self.track_list.delete(0, tk.END)
+        self.track_list.insert(tk.END, *self.filenames)
+        self.select_first_track()
+        pygame.mixer.music.unload()
+        pygame.mixer.music.load(self.pathnames[0])
 
     def play(self):
         try:
