@@ -135,6 +135,7 @@ class MusicPlayer:
             for pathname in self.pathnames:
                 filename = os.path.basename(pathname)
                 self.filenames.append(filename)
+            self.playing = False
             self.populate_track_list()
 
     def load_tracks(self):
