@@ -23,7 +23,7 @@ Here’s what this music player can do:
 📂 **Load Tracks**  
 - Browse your local system  
 - Select one or more audio files (.mp3, .wav, etc.) to load into the playlist
-- Supports Wav, Ogg, and Mp3 files.
+- Supports Wav, Ogg, Flac and Mp3 files.
 
 🖐️ **Welcome Message**  
 - A friendly greeting appears when you launch the app ✨
@@ -34,6 +34,10 @@ Here’s what this music player can do:
 🔁 **Looping Functionality**
 
 - Loop your favorite track with a single toggle
+  
+ 🔊 **Shuffle Feature**
+
+- Play your songs in a different order.
 
 🖌️ **Themed UI**  
 - Powered by **`ttkthemes`**, the app offers a modern and consistent look across platforms  
