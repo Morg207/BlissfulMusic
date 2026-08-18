@@ -25,9 +25,12 @@ class MusicPlayer:
         self.create_track_info(right_frame)
         right_frame.pack(padx=(10,0),pady=(20,0))
         self.muted = False
+        self.playing = False
         self.filenames = []
         self.pathnames = []
         self.volume = 1.0
+        self.selected_index = 0
+        self.play_next()
 
     def create_frames(self):
         self.window_frame = tk.Frame(self.window, background="white")
@@ -75,7 +78,7 @@ class MusicPlayer:
         loop_checkbox.pack(side="left", padx=(0,8))
         shuffle_button = ttk.Button(frame, text="Shuffle", command=self.shuffle, width=7)
         shuffle_button.pack(side="left")
-        frame.pack(pady=(0,20))  
+        frame.pack(pady=(0,20))
 
     def create_buttons(self, track_info_frame, options_frame):
         track_button = ttk.Button(track_info_frame,text="Load tracks",command=self.load_tracks)
@@ -86,8 +89,8 @@ class MusicPlayer:
     def create_control_buttons(self, options_frame):
         self.play_button = ttk.Button(options_frame, text="Play", command=self.play, width=4)
         stop_button = ttk.Button(options_frame, text="Stop", command=self.stop, width=4)
-        pause_button = ttk.Button(options_frame, text="Pause", command=MusicPlayer.pause, width=6)
-        unpause_button = ttk.Button(options_frame, text="Unpause", command=MusicPlayer.unpause, width=8)
+        pause_button = ttk.Button(options_frame, text="Pause", command=self.pause, width=6)
+        unpause_button = ttk.Button(options_frame, text="Unpause", command=self.unpause, width=8)
         mute_button = ttk.Button(options_frame, text="Mute", command=self.mute, width=4)
         self.play_button.pack(side="left", padx=(0, 1))
         stop_button.pack(side="left", padx=(0, 1)) 
@@ -109,6 +112,22 @@ class MusicPlayer:
         self.volume = float(current_volume) / 10.0
         pygame.mixer.music.set_volume(self.volume)
 
+    def play_next(self):
+        if not pygame.mixer.music.get_busy() and self.playing:
+            self.track_list.select_clear(self.selected_index)
+            self.selected_index += 1
+            if self.selected_index >= len(self.filenames):
+                self.selected_index = 0
+            pygame.mixer.music.load(self.pathnames[self.selected_index])
+            if self.loop_var.get():
+                pygame.mixer.music.play(loops=-1)
+            else:
+                pygame.mixer.music.play()
+            self.track_list.selection_set(self.selected_index)
+            self.song_label.config(text=self.filenames[self.selected_index])
+
+        self.window.after(500, self.play_next)
+
     def shuffle(self):
         if self.pathnames:
             random.shuffle(self.pathnames)
@@ -119,7 +138,7 @@ class MusicPlayer:
             self.populate_track_list()
 
     def load_tracks(self):
-        filetypes = [("Mp3", "*.mp3"),("Wav","*.wav"),("Ogg","*.ogg"), ("Flac","*.flac")]
+        filetypes = [("Mp3", "*.mp3"),("Wav","*.wav"),("Ogg","*.ogg"),("Flac","*.flac")]
         pathnames = list(filedialog.askopenfilenames(filetypes=filetypes))
         if pathnames:
             self.filenames.clear()
@@ -143,6 +162,7 @@ class MusicPlayer:
            else:
                pygame.mixer.music.play()
            self.play_button.config(state="disabled")
+           self.playing = True
         except pygame.error:
             pass
 
@@ -150,20 +170,21 @@ class MusicPlayer:
         try:
             pygame.mixer.music.stop()
             self.play_button.config(state="enabled")
+            self.playing = False
         except pygame.error:
             pass
 
-    @staticmethod
-    def pause():
+    def pause(self):
         try:
             pygame.mixer.music.pause()
+            self.playing = False
         except pygame.error:
             pass
-        
-    @staticmethod
-    def unpause():
+
+    def unpause(self):
         try:
             pygame.mixer.music.unpause()
+            self.playing = True
         except pygame.error:
             pass
 
@@ -180,8 +201,9 @@ class MusicPlayer:
     def mouse_select(self, event=None):
         if self.track_list.size() > 0:
             self.play_button.config(state="enabled")
-            selected_index = self.track_list.curselection()[0]
-            self.select_track(selected_index)
+            self.selected_index = self.track_list.curselection()[0]
+            self.select_track(self.selected_index)
+            self.playing = False
 
     def select_track(self, selected_index):
         pathname = self.pathnames[selected_index]
@@ -195,8 +217,9 @@ class MusicPlayer:
         self.track_list.selection_set(selected_index)
 
     def select_first_track(self):
-        self.track_list.selection_set(0)
-        self.song_label.config(text=self.filenames[0])
+        self.selected_index = 0
+        self.track_list.selection_set(self.selected_index)
+        self.song_label.config(text=self.filenames[self.selected_index])
         self.track_number.config(text=f"Tracks: {self.track_list.size()}")
         self.play_button.config(state="enabled")
                
