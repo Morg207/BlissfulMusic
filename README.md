@@ -57,5 +57,6 @@ Make sure you have the following installed:
 
 ### Screenshots
 
-<img width="1271" height="812" alt="Blissful Music Screenshot" src="https://github.com/user-attachments/assets/4ea15bf8-c797-4998-9169-2f9999853eb6" />
+<img width="1049" height="782" alt="Blissful Music Screenshot" src="https://github.com/user-attachments/assets/77a58371-3d98-4122-80be-aa6ddfd074cf" />
+
 
