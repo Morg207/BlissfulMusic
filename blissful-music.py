@@ -155,6 +155,7 @@ class MusicPlayer:
         self.select_first_track()
         pygame.mixer.music.unload()
         pygame.mixer.music.load(self.pathnames[0])
+        self.playing = False
 
     def play(self):
         try:
@@ -185,7 +186,8 @@ class MusicPlayer:
     def unpause(self):
         try:
             pygame.mixer.music.unpause()
-            self.playing = True
+            if self.play_button.cget("state") == "disabled":
+                self.playing = True
         except pygame.error:
             pass
 
