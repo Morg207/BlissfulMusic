@@ -165,7 +165,7 @@ class MusicPlayer:
         self.convert_button.config(state="enabled")
 
     @staticmethod
-    def delete_corrupt_wav(wav_path): #Why opening a file for writing, it creates the file in the file system.
+    def delete_corrupt_wav(wav_path): #When opening a file for writing, it creates the file in the file system.
         if os.path.exists(wav_path): #Stops the user from having to delete corrupt files manually.
             try:
                 os.remove(wav_path)
