@@ -1,12 +1,77 @@
 import pygame
 import tkinter as tk
 from tkinter import filedialog
+from tkinter import messagebox
 from tkinter import ttk
 from ttkthemes import ThemedTk
 import random
 import os
+import av
+import threading
 
+pygame.mixer.pre_init(frequency=44100, size=-16, channels=2, buffer=1024)
 pygame.mixer.init()
+
+def write_wav_file(audio_data, wav_output):
+    try:
+        input_stream = audio_data.streams.audio[0]
+        output_stream = wav_output.add_stream("pcm_s16le", rate=input_stream.rate)
+        resampler = av.AudioResampler("s16", "stereo", rate=input_stream.rate)
+        for frame in audio_data.decode(input_stream):
+            resampled = resampler.resample(frame)
+            for resampled_frame in resampled:
+                for packet in output_stream.encode(resampled_frame):
+                    wav_output.mux(packet)
+        for resampled_frame in resampler.resample(None):
+            for packet in output_stream.encode(resampled_frame):
+                wav_output.mux(packet)
+        write_success = True
+    except Exception:
+        write_success = False
+    finally:
+        audio_data.close()
+        wav_output.close()
+    return write_success
+
+class ConvertProgress:
+    def __init__(self, window, total_files):
+        self.wavs_written = 0
+        self.total_files = total_files
+        self.window = window
+        self.top_window = tk.Toplevel(self.window)
+        self.top_window.title("Convert Progress")
+        self.top_window.transient(self.window)
+        self.top_window.focus_force()
+        frame = tk.Frame(self.top_window)
+        self.progress_label = tk.Label(frame, text="Progress: 0%", font=("Arial",13))
+        self.progress_label.pack(pady=(0,10))
+        self.progress_bar = ttk.Progressbar(frame, length=150, mode="determinate", orient=tk.HORIZONTAL)
+        self.progress_bar.pack()
+        frame.pack(padx=(25, 25), pady=(25,25))
+        self.top_window.update_idletasks()
+        half_window_width = self.top_window.winfo_width() // 2
+        half_window_height = self.top_window.winfo_height() // 2
+        self.top_window.geometry(
+            f"+{(self.window.winfo_x() + self.window.winfo_width() // 2) \
+                - half_window_width}+{(window.winfo_y() + window.winfo_height() // 2) - half_window_height}")
+
+    def _update(self):
+        if not self.top_window.winfo_exists():
+            return
+        self.wavs_written+=1
+        progress = int(self.wavs_written / self.total_files * 100)
+        self.progress_bar["value"] = progress
+        self.progress_label.config(text=f"Progress: {progress}%")
+
+    def update_progress(self):
+        self.window.after(0, self._update)
+
+    def destroy_window(self, millis=0):
+        self.window.after(millis, self._destroy_window)
+
+    def _destroy_window(self):
+        if self.top_window.winfo_exists():
+            self.top_window.destroy()
 
 class MusicPlayer:
     def __init__(self):
@@ -20,9 +85,10 @@ class MusicPlayer:
         self.create_buttons(track_info_frame, options_frame)
         options_frame.pack(padx=(10,10),pady=(20,20))
         self.create_volume_slider()
-        self.window_frame.pack(padx=20,pady=20)
+        self.window_frame.pack(padx=20,pady=(20, 25))
         self.left_frame.pack(side="left",padx=(0,0))
         self.create_track_info(right_frame)
+        self.create_audio_converter(right_frame)
         right_frame.pack(padx=(10,0),pady=(20,0))
         self.muted = False
         self.playing = False
@@ -30,7 +96,9 @@ class MusicPlayer:
         self.pathnames = []
         self.volume = 1.0
         self.selected_index = 0
+        self.output_directory = ""
         self.play_next()
+        self.convert_progress = None
 
     def create_frames(self):
         self.window_frame = tk.Frame(self.window, background="white")
@@ -67,7 +135,87 @@ class MusicPlayer:
         self.track_list.config(xscrollcommand=scrollbar_x.set)
         scrollbar_x.pack(side="bottom", fill="x")
         track_frame.pack()
-        self.track_number.pack(pady=(0,3),padx=(3,0),side="left")
+        self.track_number.pack(pady=(3,3),padx=(3,0),side="left")
+
+    def create_audio_converter(self, right_frame):
+        output_button = ttk.Button(right_frame, width=6, text="Folder", command=self.output_select)
+        output_button.pack(side="right", padx=(0,10),pady=(6, 8))
+        self.convert_button = ttk.Button(right_frame, state="disabled", width=10, text="Make Wavs", command=self.convert)
+        self.convert_button.pack(side="right", padx=(0,5),pady=(6, 8))
+
+    def show_conversion_error(self, failed_wavs):
+        messagebox.showerror(
+            title="Wav Conversion Error",
+            message=f"{failed_wavs} Wav file(s) could not be written.",
+            parent=self.window
+        )
+
+    def show_conversion_success(self):
+        messagebox.showinfo(
+            title="Operation Successful",
+            message="Wavs written successfully.",
+            parent=self.window
+        )
+
+    def show_overwrite_error(self):
+        messagebox.showerror(
+            title="Overwrite Error",
+            message="Reading and writing the same wav file. Choose different files to convert.",
+            parent=self.window)
+        self.convert_button.config(state="enabled")
+
+    @staticmethod
+    def delete_corrupt_wav(wav_path):
+        if os.path.exists(wav_path):
+            try:
+                os.remove(wav_path)
+            except PermissionError:
+                pass
+
+    def check_same_file(self, pathname, wav_path):
+        if os.path.exists(wav_path):
+            if os.path.samefile(pathname, wav_path):
+                self.convert_progress.destroy_window()
+                self.window.after(0, self.show_overwrite_error)
+                return True
+        return False
+
+    def create_wavs(self):
+        failed_wavs = 0
+        for i in range(len(self.pathnames)):
+            pathname = self.pathnames[i]
+            audio_data = av.open(pathname)
+            filename = self.filenames[i]
+            wav_filename = os.path.splitext(filename)[0] + ".wav"
+            wav_path = os.path.join(self.output_directory, wav_filename)
+            if self.check_same_file(pathname, wav_path):
+                return
+            wav_output = av.open(wav_path, mode="w")
+            if not write_wav_file(audio_data, wav_output):
+                failed_wavs+=1
+                MusicPlayer.delete_corrupt_wav(wav_path)
+            else:
+                self.convert_progress.update_progress()
+        self.convert_progress.destroy_window(50)
+        if failed_wavs > 0:
+            self.window.after(0, self.show_conversion_error, failed_wavs)
+        else:
+            self.window.after(0, self.show_conversion_success)
+        self.window.after(0, lambda: self.convert_button.config(state="enabled"))
+
+    def convert(self):
+        if self.output_directory != "":
+            self.convert_button.config(state="disabled")
+            self.convert_progress = ConvertProgress(self.window, self.track_list.size())
+            convert_thread = threading.Thread(target=self.create_wavs)
+            convert_thread.start()
+
+    def output_select(self):
+        directory = filedialog.askdirectory(title="Wav Output")
+        if directory:
+            self.output_directory = directory
+            if self.track_list.size() > 0:
+                self.convert_button.config(state="enabled")
 
     def create_volume_slider(self):
         frame = ttk.Frame(self.left_frame)
@@ -125,7 +273,6 @@ class MusicPlayer:
                 pygame.mixer.music.play()
             self.track_list.selection_set(self.selected_index)
             self.song_label.config(text=self.filenames[self.selected_index])
-
         self.window.after(500, self.play_next)
 
     def shuffle(self):
@@ -156,6 +303,8 @@ class MusicPlayer:
         pygame.mixer.music.unload()
         pygame.mixer.music.load(self.pathnames[0])
         self.playing = False
+        if self.output_directory != "":
+            self.convert_button.config(state="enabled")
 
     def play(self):
         try:
@@ -187,7 +336,7 @@ class MusicPlayer:
         try:
             pygame.mixer.music.unpause()
             if self.play_button.cget("state") == "disabled":
-                self.playing = True
+              self.playing = True
         except pygame.error:
             pass
 
