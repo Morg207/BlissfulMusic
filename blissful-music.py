@@ -64,10 +64,10 @@ class ConvertProgress:
         self.progress_label.config(text=f"Progress: {progress}%")
 
     def update_progress(self):
-        self.window.after(0, self._update)
-
+        self.window.after(0, self._update) #Never update gui components in a separate thread with tkinter.
+                                           #After runs this code on the gui thread as soon as possible.
     def destroy_window(self, millis=0):
-        self.window.after(millis, self._destroy_window)
+        self.window.after(millis, self._destroy_window) 
 
     def _destroy_window(self):
         if self.top_window.winfo_exists():
@@ -165,8 +165,8 @@ class MusicPlayer:
         self.convert_button.config(state="enabled")
 
     @staticmethod
-    def delete_corrupt_wav(wav_path):
-        if os.path.exists(wav_path):
+    def delete_corrupt_wav(wav_path): #Why opening a file for writing, it creates the file in the file system.
+        if os.path.exists(wav_path): #Stops the user from having to delete corrupt files manually.
             try:
                 os.remove(wav_path)
             except PermissionError:
@@ -196,8 +196,8 @@ class MusicPlayer:
                 MusicPlayer.delete_corrupt_wav(wav_path)
             else:
                 self.convert_progress.update_progress()
-        self.convert_progress.destroy_window(50)
-        if failed_wavs > 0:
+        self.convert_progress.destroy_window(50) #This deletes the progress bar window 50 milliseconds after conversion finishes.
+        if failed_wavs > 0:                      #This is to allow the progress bar to update fully to 100%.
             self.window.after(0, self.show_conversion_error, failed_wavs)
         else:
             self.window.after(0, self.show_conversion_success)
@@ -261,8 +261,8 @@ class MusicPlayer:
         pygame.mixer.music.set_volume(self.volume)
 
     def play_next(self):
-        if not pygame.mixer.music.get_busy() and self.playing:
-            self.track_list.select_clear(self.selected_index)
+        if not pygame.mixer.music.get_busy() and self.playing: #If loop is off, plays the playlist from start to finish.
+            self.track_list.select_clear(self.selected_index)  #Loops back to the start when done.
             self.selected_index += 1
             if self.selected_index >= len(self.filenames):
                 self.selected_index = 0
@@ -277,8 +277,8 @@ class MusicPlayer:
 
     def shuffle(self):
         if self.pathnames:
-            random.shuffle(self.pathnames)
-            self.filenames.clear()
+            random.shuffle(self.pathnames) #A shuffle feature is really easy to implement.
+            self.filenames.clear()         #Just uses the built in shuffle function.
             for pathname in self.pathnames:
                 filename = os.path.basename(pathname)
                 self.filenames.append(filename)
