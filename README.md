@@ -53,7 +53,7 @@ Make sure you have the following installed:
 - Python 3.6+
 - Required libraries:
   ```bash
-  pip install pygame ttkthemes
+  pip install pygame ttkthemes av
 
 ### Screenshots
 
