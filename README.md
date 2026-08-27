@@ -14,6 +14,11 @@ Here’s what this music player can do:
 - Select and play any track from the list
 - Track counter to tell you how many tracks you've loaded
 
+🎶 **Audio File To Wav Converter**
+- Convert your music playlist to wav format with just a few clicks!
+- Automates tedious track conversions.
+- Perfect for burning tracks to a CD in the best quality possible.
+
 ▶️ **Playback Controls**  
 - **Play** your selected track  
 - **Stop** the track anytime  
